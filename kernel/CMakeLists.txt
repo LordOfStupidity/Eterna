@@ -82,3 +82,197 @@ else()
     message("-- dd and mtools not found on system, skipping image_raw target generation")
 endif()
 
+# Boot media generation: GPT Partitioned hard drive
+find_program(CREATEGPT_PROGRAM createGPT)
+if(CREATEGPT_PROGRAM)
+    message(VERBOSE "Found createGPT, creating target: image_gpt")
+    add_custom_target(
+        image_gtp
+        COMMAND
+        ${CREATEGPT_PROGRAM} -o ${IMAGE_DIR}/Eterna.bin -p ${IMAGE_DIR}/Eterna.img --type system
+        COMMENT "Generating GUID Partition Table with EFI System partition using `createGPT`"
+        USES_TERMINAL
+        VERBATIM
+    )
+elseif(CMAKE_HOST_UNIX)
+    find_program(FDISK_PROGRAM fdisk)
+    if(BASH_PROGRAM AND FDISK_PROGRAM)
+        message(VERBOS "Found bash and fdisk, creating target: image_gpt")
+        add_custom_target(
+            image_gpt
+            COMMAND ${BASH_PROGRAM} mkgpt_fdisk.sh
+            WORKING_DIRECTORY ${SCRIPTS_DIR}
+            COMMENT "Generating GUID Partition Table with EFI System partition using `fdisk`"
+            USES_TERMINAL
+            VERBATIM
+        )
+    else()
+        find_program(MKGPT_PROGRAM mkgpt)
+        if(MKGPT_PROGRAM)
+            message(VERBOSE "Found mkgpt, creating target: image_gpt")
+            add_custom_target(
+                image_gpt
+                COMMAND ${MKGPT_PROGRAM}
+                -o ${IMAGE_DIR}/Eterna.bin
+                --part ${IMAGE_DIR}/Eterna.img --type system
+                COMMENT "Generating GUID Partition Table with EFI System Partition using `mkgpt`"
+                USES_TERMINAL
+                VERBATIM
+            )
+        else()
+            message("-- Neither createGPT, fdisk, or mkgpt found on system, skipping image_gpt target generation")
+        endif()
+    endif()
+else()
+    message("-- createGPT not found on system, skipping image_gpt target generation")
+endif()
+
+# Boot media generation: ISO-9660 CD-ROM
+find_program(XORRISO_PROGRAM xorriso)
+if(XORRISO_PROGRAM)
+    message(VERBOSE "Found xorriso, creating target: image_iso")
+    add_custom_target(
+        image_iso
+        COMMAND ${CMAKE_COMMAND} -E make_directory iso
+        COMMAND ${CMAKE_COMMAND} -E copy Eterna.img iso
+        COMMAND
+        ${XORRISO_PROGRAM} -as mkisofs
+        -R -f
+        -e Eterna.img
+        -no-emul-boot
+        -o Eterna.iso iso
+        COMMAND rm -R iso
+        COMMENT "Generating El-Torito ISO-9660 boot media"
+        WORKING_DIRECTORY ${IMAGE_DIR}
+        USES_TERMINAL
+        VERBATIM
+    )
+else()
+    message("-- xorriso not found on system, skipping image_iso target generation")
+endif()
+
+# Boot media generation: GPT formatted disk image in VDI format.
+find_program(QEMU_IMG_PROGRAM qemu-img)
+if(QEMU_IMG_PROGRAM)
+    message(VERBOSE "Found qemu-img, creating target: image_vdi")
+    add_custom_target(
+        image_vdi
+        COMMAND ${QEMU_IMG_PROGRAM} convert -O vdi Eterna.bin Eterna.vdi
+        COMMENT "Generating VDI format of GUID Parition Table with EFI System partition using `qemu-img`"
+        WORKING_DIRECTORY ${IMAGE_DIR}
+        USES_TERMINAL
+        VERBATIM
+    )
+    if(TARGET image_gpt)
+        add_dependencies(image_vdi image_gpt)
+    endif()
+else()
+    message("-- qemu-img not found on system, skipping image_vdi target generation")
+endif()
+
+if(TARGET image_raw)
+    if(TARGET image_gpt)
+        add_dependencies(image_gpt image_raw)
+    endif()
+    if(TARGET image_iso)
+        add_dependencies(image_iso image_raw)
+    endif()
+endif()
+
+# Add a custom target to run QEMU with proper flags
+# if QEMU for ARCH is found in the PATH environment variable
+find_program(QEMU_PROGRAM qemu-system-${ARCH})
+if(QEMU_PROGRAM)
+    message(VERBOSE "Found QEMU for ${ARCH}, creating targets:\r\n|-- run_qemu\r\n|-- runimg_qemu\r\n|-- runhda_qemu\r\n|-- runiso_qemu")
+    set(
+        QEMU_FLAGS
+        -machine q35
+        # cpu: Broadwell, Cascadelake-Server, Cooperlake, Conroe, core2duo,
+        #       Denverton, Dhyana, EPYC, Haswell, IvyBridge, kvm64, max,
+        #       Nehalem, Penryn, qemu64, SandyBridge, Skylake-[Client|Server],
+        #       Snowridge, Westmere
+        -cpu qemu64
+        # Multiple processors (commented until utilized).
+        # -smp 8,sockets=2,cores=2,threads=2,maxcpus=8
+        # 100mb of RAM.
+        -m 100M
+        # Use local time as real time clock base
+        -rtc base=localtime,clock=host,driftfix=none
+        # This is deprecated
+        -soundhw pcspk
+        # No networking drivers yet.
+        -net none
+        # Show extra_information regarding triple faults
+        -d cpu_reset
+    )
+    if(QEMU_DEBUG)
+        list(APPEND QEMU_FLAGS -S -s)
+    endif()
+    set(OVMF_CODE "${REPO_DIR}/OVMFbin/OVMF_CODE-pure-efi.fd")
+    set(OVMF_VARS "${REPO_DIR}/OVMFbin/OVMF_VARS_Eterna.fd")
+    cmake_path(NATIVE_PATH OVMF_CODE NORMALIZE OVMF_CODE)
+    cmake_path(NATIVE_PATH OVMF_VARS NORMALIZE OVMF_VARS)
+    list(
+        APPEND QEMU_FLAGS
+        -drive if=pflash,format=raw,unit=0,file=${OVMF_CODE},readonly=on
+        -drive if=pflash,format=raw,unit=1,file=${OVMF_VARS}
+    )
+    file(COPY_FILE "${REPO_DIR}/OVMFbin/OVMF_VARS-pure-efi.fd" "${OVMF_VARS}")
+    set(FAT_BOOT_DIR "${IMAGE_DIR}/fat")
+    add_custom_target(
+        run_qemu
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${FAT_BOOT_DIR}/EFI/BOOT"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${FAT_BOOT_DIR}/Eterna"
+        COMMAND ${CMAKE_COMMAND} -E copy "${REPO_DIR}/boot/boot.efi" "${FAT_BOOT_DIR}/EFI/BOOT/"
+        COMMAND ${CMAKE_COMMAND} -E copy "${SCRIPTS_DIR}/startup.nsh" "${FAT_BOOT_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy "${IMAGE_DIR}/kernel.elf" "${FAT_BOOT_DIR}/Eterna/"
+        COMMAND ${CMAKE_COMMAND} -E copy "${IMAGE_DIR}/*.psf" "${FAT_BOOT_DIR}/Eterna/"
+        COMMAND ${QEMU_PROGRAM} ${QEMU_FLAGS} -hdb fat:floppy:rw:${FAT_BOOT_DIR}
+        COMMAND ${CMAKE_COMMAND} -E rm -R ${FAT_BOOT_DIR}
+        COMMENT "Running QEMU for ${ARCH} from directory treated as FAT32 floppy"
+        USES_TERMINAL
+        WORKING_DIRECTORY ${REPO_DIR}
+        DEPENDS
+        ${REPO_DIR}/boot/boot.efi
+        ${SCRIPTS_DIR}/startup.nsh
+        VERBATIM
+    )
+    add_custom_target(
+        runimg_qemu
+        COMMAND ${QEMU_PROGRAM} ${QEMU_FLAGS} -drive format=raw,file=${IMAGE_DIR}/Eterna.img
+        COMMENT "Running QEMU for ${ARCH} from FAT32 `Eterna.img`"
+        USES_TERMINAL
+        WORKING_DIRECTORY ${REPO_DIR}
+        VERBATIM
+    )
+    add_custom_target(
+        runhda_qemu
+        COMMAND ${QEMU_PROGRAM} ${QEMU_FLAGS} -drive format=raw,file=${IMAGE_DIR}/Eterna.bin
+        COMMENT "Running QEMU for ${ARCH} from GPT `Eterna.bin`"
+        USES_TERMINAL
+        WORKING_DIRECTORY ${REPO_DIR}
+        VERBATIM
+    )
+    add_custom_target(
+        runiso_qemu
+        COMMAND ${QEMU_PROGRAM} ${QEMU_FLAGS} -drive format=raw,file=${IMAGE_DIR}/Eterna.iso,media=cdrom
+        COMMENT "Running QEMU for ${ARCH} from ISO `Eterna.iso`"
+        USES_TERMINAL
+        WORKING_DIRECTORY ${REPO_DIR}
+        VERBATIM
+    )
+
+    # Dependencies
+    add_dependencies(run_qemu Kernel)
+    if(TARGET image_raw)
+        add_dependencies(runimg_qemu image_raw)
+    endif()
+    if( TARGET image_gpt )
+        add_dependencies( runhda_qemu image_gpt )
+    endif()
+    if( TARGET image_iso )
+        add_dependencies( runiso_qemu image_iso )
+    endif()
+else()
+    message("-- QEMU for ${ARCH} not found on your system, skipping run[img|gpt|iso]_qemu target generation.")
+endif()
