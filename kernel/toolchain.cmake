@@ -1,0 +1,15 @@
+include("${CMAKE_CURRENT_LIST_DIR}/config.cmake")
+
+set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_VERSION ${ETERNA_VERSION})
+
+set(CMAKE_SYSROOT "${CMAKE_CURRENT_LIST_DIR}/../root")
+if(NOT EXISTS "${CMAKE_SYSROOT}")
+    message(FATAL_ERROR "The sysroot at ${CMAKE_SYSROOT} doesn't exist")
+endif()
+
+find_program(CMAKE_C_COMPILER clang REQUIRED)
+find_program(CMAKE_CXX_COMPILER clang++ REQUIRED)
+
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
