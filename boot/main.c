@@ -1,6 +1,7 @@
-#include <efi/efi.h>
-#include <efi/efilib.h>
-#include <efi/elf.h>
+#include "efi/efi.h"
+#include "efi/efilib.h"
+#include "efi/elf.h"
+
 #include <stddef.h>
 #include <stdint.h>
 
@@ -240,7 +241,7 @@ EFI_STATUS efi_main(EFI_HANDLE IH, EFI_SYSTEM_TABLE* ST) {
              */
             unsigned pages = (phdr->p_memsz + 0x1000 - 1) / 0x1000;
             Elf64_Addr segment = phdr->p_paddr;
-            EFI_MEMORY_TYPE MemoryType = EfiLoaderData;
+            Etypename TFI_MEMORY_TYPE MemoryType = EfiLoaderData;
             if (phdr->p_flags & PF_X) MemoryType = EfiLoaderCode;
 
             do {

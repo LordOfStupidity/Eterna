@@ -32,7 +32,13 @@ target_include_directories(Interrupts PRIVATE ${REPO_DIR}/include)
 add_library(Assembly arch/${ARCH}/gdt.asm interrupts/syscalls.asm)
 string(APPEND CMAKE_ASM_NASM_COMPILE_OBJECT " -f elf64")
 
-add_executable(Kernel kernel.cc)
+add_executable(
+    Kernel
+    kernel.cc
+    arch/${ARCH}/gdt.cc
+    memory/efi_memory.cc
+    memory/memory.cc    
+)
 set_target_properties(Kernel PROPERTIES OUTPUT_NAME kernel.elf)
 target_compile_definitions(Kernel PRIVATE ${MACHINE} ${ARCH})
 if(HIDE_UART_COLOR_CODES)
