@@ -2,6 +2,7 @@
 #define _REGION_HPP
 
 #include <stdint.h>
+
 namespace Memory {
     class Region {
     public:

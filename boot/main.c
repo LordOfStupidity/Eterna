@@ -281,29 +281,30 @@ EFI_STATUS efi_main(EFI_HANDLE IH, EFI_SYSTEM_TABLE* ST) {
     gBootServices->GetMemoryMap(&MapSize, Map, &MapKey, &DescriptorSize, &DescriptorVersion);
     Print(L"EFI memory map successfully parsed\n");
 
+    // TODO: Uncomment after ACPI implementation
     // ACPI 2.0
-    EFI_CONFIGURATION_TABLE* ConfigTable = gSystemTable->ConfigurationTable;
-    void* rsdp = NULL;
-    EFI_GUID ACPI2TableGuid = ACPI_20_TABLE_GUID;
-    for (UINTN index = 0; index < gSystemTable->NumberOfTableEntries; index++) {
-        if (CompareGuid(&ConfigTable[index].VendorGuid, &ACPI2TableGuid)) {
-            if (strcmp((CHAR8*)"RSD PTR ", (CHAR8*)ConfigTable->VendorTable, 8)) {
-                Print(
-                    L"Found Root System Descriptor Pointer (RSDP) Table 2.0:\n"
-                    L"  Address: 0x%x\n",
-                    (void*)ConfigTable->VendorTable);
-                UINTN sum = 0;
-                // Validate checksum.
-                // RSDP2.0 table = 36 bytes, trailing three are reserved (not included).
-                for (UINT8 i = 0; i < 33; ++i) sum += *((UINT8*)ConfigTable->VendorTable + i);
+    // EFI_CONFIGURATION_TABLE* ConfigTable = gSystemTable->ConfigurationTable;
+    // void* rsdp = NULL;
+    // EFI_GUID ACPI2TableGuid = ACPI_20_TABLE_GUID;
+    // for (UINTN index = 0; index < gSystemTable->NumberOfTableEntries; index++) {
+    //     if (CompareGuid(&ConfigTable[index].VendorGuid, &ACPI2TableGuid)) {
+    //         if (strcmp((CHAR8*)"RSD PTR ", (CHAR8*)ConfigTable->VendorTable, 8)) {
+    //             Print(
+    //                 L"Found Root System Descriptor Pointer (RSDP) Table 2.0:\n"
+    //                 L"  Address: 0x%x\n",
+    //                 (void*)ConfigTable->VendorTable);
+    //             UINTN sum = 0;
+    //             // Validate checksum.
+    //             // RSDP2.0 table = 36 bytes, trailing three are reserved (not included).
+    //             for (UINT8 i = 0; i < 33; ++i) sum += *((UINT8*)ConfigTable->VendorTable + i);
 
-                UINT8 checksum = (UINT8)sum;
-                Print(L"  Checksum: %d\n", checksum);
-                if (checksum == 0) rsdp = (void*)ConfigTable->VendorTable;
-            }
-        }
-        ConfigTable++;
-    }
+    //             UINT8 checksum = (UINT8)sum;
+    //             Print(L"  Checksum: %d\n", checksum);
+    //             if (checksum == 0) rsdp = (void*)ConfigTable->VendorTable;
+    //         }
+    //     }
+    //     ConfigTable++;
+    // }
 
     BootInfo info;
     info.framebuffer = gop_fb;
@@ -311,7 +312,8 @@ EFI_STATUS efi_main(EFI_HANDLE IH, EFI_SYSTEM_TABLE* ST) {
     info.map = Map;
     info.mapSize = MapSize;
     info.mapDescSize = DescriptorSize;
-    info.RSDP = rsdp;
+    // info.RSDP = rsdp;
+    info.RSDP = NULL;
 
     Print(L"Kernel entry point: 0x%x\n", elf_header.e_entry);
     Print(L"Calculated kernel entry point: 0x%x\n", elf_header.e_entry - KERNEL_VIRTUAL);

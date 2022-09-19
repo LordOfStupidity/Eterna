@@ -14,7 +14,12 @@ struct EFI_MEMORY_DESCRIPTOR {
 };
 
 namespace Memory {
-    extern const char* EFI_MEMORY_TYPE_STRINGS[];
+extern const char* EFI_MEMORY_TYPE_STRINGS[];
+
+void print_efi_memory_map(EFI_MEMORY_DESCRIPTOR* map, uint64_t mapSize,
+                          uint64_t entrySize);
+void print_efi_memory_map_summed(EFI_MEMORY_DESCRIPTOR* map, uint64_t mapSize,
+                                 uint64_t entrySize);
 }  // namespace Memory
 
 #endif  // !_EFI_MEMORY_HPP

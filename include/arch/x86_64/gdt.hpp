@@ -114,8 +114,8 @@ struct GDT {
 
 void setup_gdt();
 
-extern GDT gdt;
-extern GDTDescriptor gdt_Descriptor;
+extern GDT gGDT;
+extern GDTDescriptor gGDTD;
 
 extern "C" void loadGDT(GDTDescriptor* gdtDescriptor);
 

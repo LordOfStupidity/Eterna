@@ -8,6 +8,11 @@ if(NOT EXISTS "${CMAKE_SYSROOT}")
     message(FATAL_ERROR "The sysroot at ${CMAKE_SYSROOT} doesn't exist")
 endif()
 
+
+set(CMAKE_EXE_LINKER_FLAGS_INIT "-fuse-ld=lld")
+set(CMAKE_MODULE_LINKER_FLAGS_INIT "-fuse-ld=lld")
+set(CMAKE_SHARED_LINKER_FLAGS_INIT "-fuse-ld=lld")
+
 find_program(CMAKE_C_COMPILER clang REQUIRED)
 find_program(CMAKE_CXX_COMPILER clang++ REQUIRED)
 
