@@ -19,22 +19,17 @@ int memcmp(void* aptr, void* bptr, uint64_t numBytes) {
     return 0;
 }
 
-void memcpy(void* src, void* dest, uint64_t numBytes) {
-    if (src == dest)
-        return;
+void memcpy(const void* src, void* dest, uint64_t numBytes) {
+    char* pszDest = (char*)dest;
+    const char* pszSource = (const char*)src;
 
-    int64_t i = 0;
-    for (; i <= (int64_t)numBytes - 2048; i += 2048)
-        *(uint16384_t*)((uint64_t)dest + i) =
-            *(uint16384_t*)((uint64_t)src + i);
-    for (; i <= (int64_t)numBytes - 128; i += 128)
-        *(uint1024_t*)((uint64_t)dest + i) = *(uint1024_t*)((uint64_t)src + i);
-    for (; i <= (int64_t)numBytes - 32; i += 32)
-        *(uint256_t*)((uint64_t)dest + i) = *(uint256_t*)((uint64_t)src + i);
-    for (; i <= (int64_t)numBytes - 8; i += 8)
-        *(uint64_t*)((uint64_t)dest + i) = *(uint64_t*)((uint64_t)src + i);
-    for (; i < (int64_t)numBytes; ++i)
-        *(uint8_t*)((uint64_t)dest + i) = *(uint8_t*)((uint64_t)src + i);
+    if((pszDest != NULL) && (pszSource != NULL)) {
+        while(numBytes) {
+            // Copy byte by byte
+            *(pszDest++) = *(pszSource++);
+            --numBytes;
+        }
+    }
 }
 
 void memset(void* start, uint8_t value, uint64_t numBytes) {
@@ -60,37 +55,37 @@ void memset(void* start, uint8_t value, uint64_t numBytes) {
     }
 }
 
-void volatile_read(const volatile void* ptr, volatile void* out,
-                   uint64_t length) {
-    if (ptr == nullptr || out == nullptr || length == 0)
-        return;
+// void volatile_read(const volatile void* ptr, volatile void* out,
+//                    uint64_t length) {
+//     if (ptr == nullptr || out == nullptr || length == 0)
+//         return;
 
-    if (length == 1) {
-        *(uint8_t*)out = *(volatile uint8_t*)ptr;
-    } else if (length == 2) {
-        *(uint16_t*)out = *(volatile uint16_t*)ptr;
-    } else if (length == 4) {
-        *(uint32_t*)out = *(volatile uint32_t*)ptr;
-    } else if (length == 8) {
-        *(uint64_t*)out = *(volatile uint64_t*)ptr;
-    } else {
-        memcpy((void*)ptr, (void*)out, length);
-    }
-}
+//     if (length == 1) {
+//         *(uint8_t*)out = *(volatile uint8_t*)ptr;
+//     } else if (length == 2) {
+//         *(uint16_t*)out = *(volatile uint16_t*)ptr;
+//     } else if (length == 4) {
+//         *(uint32_t*)out = *(volatile uint32_t*)ptr;
+//     } else if (length == 8) {
+//         *(uint64_t*)out = *(volatile uint64_t*)ptr;
+//     } else {
+//         memcpy((void*)ptr, (void*)out, length);
+//     }
+// }
 
-void volatile_write(void* data, volatile void* ptr, uint64_t length) {
-    if (data == nullptr || ptr == nullptr || length == 0)
-        return;
+// void volatile_write(void* data, volatile void* ptr, uint64_t length) {
+//     if (data == nullptr || ptr == nullptr || length == 0)
+//         return;
 
-    if (length == 1) {
-        *(volatile uint8_t*)ptr = *(uint8_t*)data;
-    } else if (length == 2) {
-        *(volatile uint16_t*)ptr = *(uint16_t*)data;
-    } else if (length == 4) {
-        *(volatile uint32_t*)ptr = *(uint32_t*)data;
-    } else if (length == 8) {
-        *(volatile uint64_t*)ptr = *(uint64_t*)data;
-    } else {
-        memcpy(data, (void*)ptr, length);
-    }
-}
+//     if (length == 1) {
+//         *(volatile uint8_t*)ptr = *(uint8_t*)data;
+//     } else if (length == 2) {
+//         *(volatile uint16_t*)ptr = *(uint16_t*)data;
+//     } else if (length == 4) {
+//         *(volatile uint32_t*)ptr = *(uint32_t*)data;
+//     } else if (length == 8) {
+//         *(volatile uint64_t*)ptr = *(uint64_t*)data;
+//     } else {
+//         memcpy(data, (void*)ptr, length);
+//     }
+// }

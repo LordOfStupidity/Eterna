@@ -32,7 +32,17 @@ add_library(
     panic/panic.cc
 )
 
-target_compile_options(Interrupts PRIVATE -ffreestanding -fno-exceptions -mcmodel=kernel -mgeneral-regs-only -mno-red-zone -c -fno-stack-protector)
+target_compile_options(
+    Interrupts
+    PRIVATE 
+    -ffreestanding 
+    -fno-exceptions 
+    -mcmodel=kernel 
+    -mgeneral-regs-only 
+    -mno-red-zone 
+    -c 
+    -fno-stack-protector
+)
 target_include_directories(Interrupts PRIVATE ${REPO_DIR}/include)
 
 add_library(
@@ -43,8 +53,6 @@ add_library(
 string(APPEND CMAKE_ASM_NASM_COMPILE_OBJECT " -f elf64")
 
 add_executable(
-
-    # .
     Kernel
     kernel.cc
     kstage1.cc
@@ -68,8 +76,29 @@ if(HIDE_UART_COLOR_CODES)
     target_compile_definitions(Kernel PRIVATE "UART_HIDE_COLOR_CODES")
 endif()
 
-target_compile_options(Kernel PRIVATE -ffreestanding -fno-exceptions -fno-rtti -fshort-wchar -mcmodel=kernel -mno-red-zone -Wall -Wextra -Werror -fno-stack-protector)
-target_link_options(Kernel PRIVATE -T ${CMAKE_CURRENT_LIST_DIR}/arch/${ARCH}/kernel.ld -static -Bsymbolic -nostdlib -z max-page-size=0x1000 -v)
+target_compile_options(
+    Kernel
+    PRIVATE 
+    -ffreestanding 
+    -fno-exceptions 
+    -fno-rtti 
+    -fshort-wchar 
+    -mcmodel=kernel 
+    -mno-red-zone 
+    -Wall 
+    -Wextra 
+    -Werror 
+    -fno-stack-protector
+)
+target_link_options(
+    Kernel 
+    PRIVATE 
+    -T ${CMAKE_CURRENT_LIST_DIR}/arch/${ARCH}/kernel.ld 
+    -static 
+    -Bsymbolic 
+    -nostdlib 
+    -z max-page-size=0x1000
+)
 target_include_directories(Kernel PRIVATE ${REPO_DIR}/include/)
 target_link_libraries(Kernel PRIVATE Interrupts)
 target_link_libraries(Kernel PRIVATE Assembly)
@@ -94,15 +123,16 @@ if(DD_PROGRAM AND MTOOLS_PROGRAM)
         COMMAND ${DD_PROGRAM} if=/dev/zero of=${IMAGE_DIR}/Eterna.img count=93750
         COMMAND mformat -i ${IMAGE_DIR}/Eterna.img -F -v "EFI System" ::
         COMMAND mmd -i ${IMAGE_DIR}/Eterna.img ::/EFI
-        COMMAND mmd -i ${IMAGE_DIR}/Eterna.img ::/EFI/Boot
+        COMMAND mmd -i ${IMAGE_DIR}/Eterna.img ::/EFI/BOOT
         COMMAND mmd -i ${IMAGE_DIR}/Eterna.img ::/Eterna
-        ${REPO_DIR}/boot/boot.efi ::/EFI/BOOT
+        COMMAND mcopy -i ${IMAGE_DIR}/Eterna.img
+        ${REPO_DIR}/gnu-efi/x86_64/bootloader/main.efi ::/EFI/BOOT
         COMMAND mcopy -i ${IMAGE_DIR}/Eterna.img ${SCRIPTS_DIR}/startup.nsh ::
         COMMAND mcopy -i ${IMAGE_DIR}/Eterna.img ${IMAGE_DIR}/kernel.elf ::/Eterna
         COMMAND mcopy -i ${IMAGE_DIR}/Eterna.img ${IMAGE_DIR}/dfltfont.psf ::/Eterna
         COMMENT "Generating UEFI-compatible FAT32 boot media"
         DEPENDS
-        ${REPO_DIR}/boot/main.efi
+        ${REPO_DIR}/gnu-efi/x86_64/bootloader/main.efi
         ${SCRIPTS_DIR}/startup.nsh
         USES_TERMINAL
         VERBATIM
@@ -242,9 +272,6 @@ if(QEMU_PROGRAM)
         # Use local time as real time clock base
         -rtc base=localtime,clock=host,driftfix=none
 
-        # This is deprecated
-        -soundhw pcspk
-
         # No networking drivers yet.
         -net none
 
@@ -274,7 +301,7 @@ if(QEMU_PROGRAM)
         run_qemu
         COMMAND ${CMAKE_COMMAND} -E make_directory "${FAT_BOOT_DIR}/EFI/BOOT"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${FAT_BOOT_DIR}/Eterna"
-        COMMAND ${CMAKE_COMMAND} -E copy "${REPO_DIR}/boot/boot.efi" "${FAT_BOOT_DIR}/EFI/BOOT/"
+        COMMAND ${CMAKE_COMMAND} -E copy "${REPO_DIR}/gnu-efi/x86_64/bootloader/main.efi" "${FAT_BOOT_DIR}/EFI/BOOT/"
         COMMAND ${CMAKE_COMMAND} -E copy "${SCRIPTS_DIR}/startup.nsh" "${FAT_BOOT_DIR}"
         COMMAND ${CMAKE_COMMAND} -E copy "${IMAGE_DIR}/kernel.elf" "${FAT_BOOT_DIR}/Eterna/"
         COMMAND ${CMAKE_COMMAND} -E copy "${IMAGE_DIR}/dfltfont.psf" "${FAT_BOOT_DIR}/Eterna/"
@@ -284,7 +311,7 @@ if(QEMU_PROGRAM)
         USES_TERMINAL
         WORKING_DIRECTORY ${REPO_DIR}
         DEPENDS
-        ${REPO_DIR}/boot/boot.efi
+        ${REPO_DIR}/gnu-efi/x86_64/bootloader/main.efi
         ${SCRIPTS_DIR}/startup.nsh
         VERBATIM
     )

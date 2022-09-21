@@ -2,7 +2,6 @@
 #define _RENDERER_HPP
 
 #include <cstdint>
-
 #include <int.hpp>
 #include <math.hpp>
 #include <memory/memory.hpp>
