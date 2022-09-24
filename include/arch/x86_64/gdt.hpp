@@ -117,6 +117,6 @@ void setup_gdt();
 extern GDT gGDT;
 extern GDTDescriptor gGDTD;
 
-extern "C" void loadGDT(GDTDescriptor* gdtDescriptor);
+extern "C" void LoadGDT(GDTDescriptor* gdtDescriptor);
 
 #endif  // !_GDT_HPP

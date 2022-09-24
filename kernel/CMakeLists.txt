@@ -280,6 +280,8 @@ if(QEMU_PROGRAM)
         # Use stdio as serial input and output.
         # this allows debug messages to reach the terminal
         -serial stdio
+
+        -s -S
     )
 
     if(QEMU_DEBUG)

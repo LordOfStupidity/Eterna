@@ -10,7 +10,7 @@
 #include <memory/virtual_memory_manager.hpp>
 #include <string.hpp>
 
-// #define DEBUG_HEAP
+#define DEBUG_HEAP
 
 void* sHeapStart{nullptr};
 void* sHeapEnd{nullptr};
@@ -113,7 +113,7 @@ void init_heap() {
         "  Size: $ull\r\n"
         "\r\n",
         sHeapStart, sHeapEnd, numBytes);
-    heap_print_debug();
+    // heap_print_debug();
 }
 
 void expand_heap(uint64_t numBytes) {

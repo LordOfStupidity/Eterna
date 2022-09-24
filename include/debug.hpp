@@ -58,7 +58,7 @@ void dbgmsg(uint8_t, ShouldNewline nl = ShouldNewline::No);
  *      %ill   -- 64 bit signed integer
  *      %f     -- double, 2 digits of precision
  *      %x,%p  -- 16 hexadecimal-digit 64 bit unsigned integer
- *      %sl    -- LensorOS `String`
+ *      %sl    -- Eterna `String`
 */
 void dbgmsg(const char* fmt, ...);
 

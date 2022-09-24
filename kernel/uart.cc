@@ -102,7 +102,7 @@ void initialize() {
     Initialized = true;
 
     // First serial messages output from the OS.
-    out("\r\n\r\nWelcome to \033[5;1;33mLensorOS\033[0m\r\n\r\n");
+    out("\r\n\r\nWelcome to \033[5;1;33mEterna\033[0m\r\n\r\n");
     out("[UART]: Initialized driver\r\n  Detected '");
     out(get_uart_chip_name(chip));
     out("' chip\r\n");
@@ -211,7 +211,7 @@ void out(uint8_t* str, uint64_t numberOfBytes) {
                 return;
             }
         }
-#endif /* defined LENSOR_OS_UART_HIDE_COLOR_CODES */
+#endif // UART_HIDE_COLOR_CODES
         out((uint8_t)*str);
 
         str++;

@@ -1,6 +1,6 @@
-[BITS 64]
+    [BITS 64]
 
-loadGDT:
+LoadGDT:
     lgdt [rdi]
     mov ax, 0x10
     mov ds, ax
@@ -13,5 +13,4 @@ loadGDT:
     push rax
     push rdi
     retfq
-
-GLOBAL loadGDT
+GLOBAL LoadGDT

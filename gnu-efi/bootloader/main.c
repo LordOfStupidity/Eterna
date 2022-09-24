@@ -205,7 +205,6 @@ EFI_STATUS efi_main(EFI_HANDLE IH, EFI_SYSTEM_TABLE* ST) {
             dflt_font->PSF1_Header->CharacterSize);
     }
 
-    // Unload LensorOS directory.
     bin->Close(bin);
 
     // LOAD KERNEL ELF64 HEADER INTO MEMORY

@@ -32,7 +32,7 @@ void prepare_interrupts() {
     // Create Interrupt Descriptor Table
     gIDT = IDTR(0x0fff, (uint64_t)&idt_storage[0]);
 
-    // Prepare Table
+    // Populate Table
     gIDT.install_handler((uint64_t)uart_com1_handler, PIC_IRQ4);
     gIDT.install_handler((uint64_t)divide_by_zero_handler, 0x00);
     gIDT.install_handler((uint64_t)double_fault_handler, 0x08);
@@ -49,7 +49,7 @@ void draw_boot_gfx() {
     gRend.puts(drawPosition,
                "<<<!===--- You are now booting into Eterna ---===!>>");
 
-    // DRAW A FACE :)
+    // Draw a face
     drawPosition = {420, 420};
 
     // left eye
@@ -80,7 +80,7 @@ uint8_t fxsave_region[512] __attribute__((aligned(16)));
 void kstage1(BootInfo* bInfo) {
     /**
      * @brief This function is monstrous, so the functionality is outlined here.
-     *     - Disable interrupts (if they weren't already)
+     *    booting - Disable interrupts (if they weren't already)
      *     - Ensure BootInfo pointer is valid (non-null)
      * x86 - Load Global Descriptor Table
      * x86 - Load Interrupt Descriptor Table
@@ -128,7 +128,7 @@ void kstage1(BootInfo* bInfo) {
     setup_gdt();
     gGDTD.Size = sizeof(GDT) - 1;
     gGDTD.Offset = V2P((uint64_t)&gGDT);
-    loadGDT((GDTDescriptor*)V2P(&gGDTD));
+    LoadGDT((GDTDescriptor*)V2P(&gGDTD));
 
     // Prepare Interrupt Descriptor Table.
     prepare_interrupts();
@@ -159,10 +159,9 @@ void kstage1(BootInfo* bInfo) {
     disable_all_interrupts();
     enable_interrupt(IRQ_UART_COM1);
 
-    Memory::print_efi_memory_map_summed(bInfo->map, bInfo->mapSize, bInfo->mapDescSize);
-
-    heap_print_debug_summed();
-    Memory::print_debug();
+    // Memory::print_efi_memory_map_summed(bInfo->map, bInfo->mapSize, bInfo->mapDescSize);
+    // heap_print_debug_summed();
+    // Memory::print_debug();
 
     // ALlow interrupts to trigger.
     dbgmsg_s("[kstage1]: Enabling interrupts\r\n");

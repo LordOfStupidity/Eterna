@@ -92,21 +92,20 @@ inline void Renderer::clamp_draw_position(Vector2<uint64_t>& position) {
 void Renderer::swap(Vector2<uint64_t> position, Vector2<uint64_t> size) {
     if (Render->BaseAddress == Target->BaseAddress)
         return;
-
     // Only swap what is within the bounds of the framebuffer.
     if (position.x > Target->PixelWidth || position.y > Target->PixelHeight)
         return;
-
-    // Ensure size doesn't over-run edge of framebuffer
+    
+    // Ensure size doesn't over-run edge of framebuffer.
     uint64_t diffX = Target->PixelWidth - position.x;
     uint64_t diffY = Target->PixelHeight - position.y;
-
+    
     if (diffX < size.x)
         size.x = diffX;
     if (diffY < size.y)
         size.y = diffY;
-
-    // Calculate addressed
+    
+    // Calculate addresses.
     uint64_t offset =
         ((BytesPerPixel * position.x) +
          (BytesPerPixel * position.y * Target->PixelsPerScanLine));
@@ -114,7 +113,7 @@ void Renderer::swap(Vector2<uint64_t> position, Vector2<uint64_t> size) {
         (uint32_t*)((uint64_t)Target->BaseAddress + offset);
     uint32_t* renderBaseAddress =
         (uint32_t*)((uint64_t)Render->BaseAddress + offset);
-
+    
     // Copy rectangle line-by-line.
     uint64_t bytesPerLine = BytesPerPixel * size.x;
     for (uint64_t y = 0; y < size.y; ++y) {

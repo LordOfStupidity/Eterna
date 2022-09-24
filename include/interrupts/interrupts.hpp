@@ -25,7 +25,7 @@
  *     12 -- PS/2 Mouse
  *     13 -- Co-processor or integrated FPU or inter-processor interrupt
  *     14 -- Primary ATA Channel
- *     15 -- Secondary ATA Channel
+ *     15 -- Secondary ATA Channelsti
  */
 #define PIC_IRQ_VECTOR_OFFSET 0x20
 #define PIC_IRQ0 PIC_IRQ_VECTOR_OFFSET + 0

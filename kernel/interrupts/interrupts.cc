@@ -77,7 +77,10 @@ __attribute__((interrupt)) void system_timer_handler(InterruptFrame* frame) {}
 __attribute__((interrupt)) void keyboard_handler(InterruptFrame* frame) {}
 
 // IRQ4: COM1/COM3 Serial Communications Recieved
-__attribute__((interrupt)) void uart_com1_handler(InterruptFrame* frame) {}
+__attribute__((interrupt)) void uart_com1_handler(InterruptFrame* frame) {
+    uint8_t data = UART::read();
+    end_of_interrupt(4);
+}
 
 /**
  *
@@ -314,36 +317,47 @@ void remap_pic() {
     uint8_t parentMasks;
     uint8_t childMasks;
     parentMasks = in8(PIC1_DATA);
+    
     io_wait();
     childMasks = in8(PIC2_DATA);
     io_wait();
+    
     // INITIALIZE BOTH CHIPS IN CASCADE MODE.
     out8(PIC1_COMMAND, ICW1_INIT | ICW1_ICW4);
     io_wait();
+    
     out8(PIC2_COMMAND, ICW1_INIT | ICW1_ICW4);
     io_wait();
+    
     // SET VECTOR OFFSET OF MASTER PIC.
     //   This allows software to throw low interrupts as normal (0-32)
     //     without triggering an IRQ that would normally be attributed to hardware.
     out8(PIC1_DATA, PIC_IRQ_VECTOR_OFFSET);
     io_wait();
+    
     // SET VECTOR OFFSET OF SLAVE PIC.
     out8(PIC2_DATA, PIC_IRQ_VECTOR_OFFSET + 8);
     io_wait();
+    
     // TELL MASTER THERE IS A SLAVE ON IRQ2.
     out8(PIC1_DATA, 4);
     io_wait();
+    
     // TELL SLAVE IT'S CASCADE IDENTITY.
     out8(PIC2_DATA, 2);
     io_wait();
+    
     // NOT QUITE SURE WHAT THIS DOES YET.
     out8(PIC1_DATA, ICW4_8086);
     io_wait();
+    
     out8(PIC2_DATA, ICW4_8086);
     io_wait();
+    
     // LOAD INTERRUPT MASKS.
     out8(PIC1_DATA, parentMasks);
     io_wait();
+    
     out8(PIC2_DATA, childMasks);
     io_wait();
 }
